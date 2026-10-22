@@ -21,6 +21,7 @@ const db = new DatabaseSync(dbPath)
 db.exec(`
   PRAGMA journal_mode = WAL;
   PRAGMA foreign_keys = ON;
+  PRAGMA busy_timeout = 5000;
 
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
@@ -250,6 +251,13 @@ export const dbApi = {
 
   touchChat(id: string): void {
     db.prepare("UPDATE chats SET updated_at = ? WHERE id = ?").run(now(), id)
+  },
+
+  deleteChat(id: string, userId: string): boolean {
+    const result = db
+      .prepare("DELETE FROM chats WHERE id = ? AND user_id = ?")
+      .run(id, userId)
+    return Number(result.changes) > 0
   },
 
   // messages
