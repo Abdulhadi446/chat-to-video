@@ -1,6 +1,8 @@
-# Deploy (tests2 + Cloudflare quick tunnel)
+# Deploy (tests2 + Cloudflare named tunnel)
 
 Target: `tests2` (Ubuntu 24.04, 2 vCPU, 952 MB RAM + 10 GB swap). Renders at 720p; builds happen **locally** because the remote build is memory-constrained.
+
+Public URL: **https://testings.thetrillioniar.me** (stable named tunnel).
 
 ## Remote layout (already provisioned)
 
@@ -41,12 +43,23 @@ ssh tests2 'cd ~/apps/chat-to-video && export PATH=$HOME/bin:$HOME/tools/node/bi
   pkill -f "node server.js" 2>/dev/null || true; \
   PORT=3000 HOSTNAME=127.0.0.1 nohup node server.js > app.log 2>&1 &'
 
-# 5. Tunnel (empty config avoids the catch-all 404 in ~/.cloudflared/config.yml)
+# 5. Named tunnel (stable hostname; already provisioned)
 ssh tests2 'cd ~/apps/chat-to-video && \
-  nohup cloudflared tunnel --config /dev/null --url http://127.0.0.1:3000 --no-autoupdate > tunnel.log 2>&1 &'
+  setsid cloudflared tunnel --config ~/.cloudflared/chat-to-video.yml run > named-tunnel.log 2>&1 < /dev/null &'
 sleep 6
-ssh tests2 'grep -o "https://[a-z0-9-]*\.trycloudflare\.com" ~/apps/chat-to-video/tunnel.log | head -1'
+curl -fsS https://testings.thetrillioniar.me/api/health
 ```
+
+Named-tunnel provisioning (done once):
+
+```bash
+cloudflared tunnel create chat-to-video
+# /home/ubuntu/.cloudflared/chat-to-video.yml maps testings.thetrillioniar.me -> 127.0.0.1:3000
+cloudflared tunnel route dns chat-to-video testings.thetrillioniar.me
+```
+
+If `route dns` attaches the hostname to the wrong tunnel, fix the CNAME target in the
+Cloudflare dashboard to `<tunnel-id>.cfargotunnel.com`.
 
 Production `.env` additions:
 
@@ -64,8 +77,8 @@ DATABASE_URL=file:./data/app.db
 ## Verify
 
 ```bash
-curl -fsS https://<tunnel>.trycloudflare.com/api/health
-BASE=https://<tunnel>.trycloudflare.com ./scripts/smoke.sh
+curl -fsS https://testings.thetrillioniar.me/api/health
+BASE=https://testings.thetrillioniar.me ./scripts/smoke.sh
 ssh tests2 'tail -50 ~/apps/chat-to-video/app.log'
 ```
 
@@ -74,5 +87,6 @@ ssh tests2 'tail -50 ~/apps/chat-to-video/app.log'
 - `output: "standalone"` is enabled in `next.config.ts`; `server.js` is the entrypoint.
 - `cacheComponents: true` forbids `export const runtime` / `export const dynamic` in route segments. Don't add them.
 - Render jobs are serialized in-process; a restart drops queued jobs (retry from the UI).
-- Quick-tunnel URLs change on every restart. Update the README after capturing one.
+- The public hostname is stable: `testings.thetrillioniar.me` → named tunnel `chat-to-video`. It survives server/tunnel restarts; no URL rewrite needed.
+- The old quick-tunnel process (`--config /dev/null`) may still exist as a fallback; it does not affect the named hostname.
 - The agent lane needs `opencode` configured with an OpenRouter provider; without it jobs fall back to the deterministic renderer.

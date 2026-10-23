@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Deploy the locally built standalone app to tests2 and (re)start the quick tunnel.
+# Deploy the locally built standalone app to tests2 and (re)start the named tunnel.
+# Public URL: https://testings.thetrillioniar.me
 # Usage: ./scripts/deploy-tests2.sh          (reuses .next/standalone)
 #        SKIP_BUILD=0 ./scripts/deploy-tests2.sh  (rebuild first)
 set -euo pipefail
@@ -53,16 +54,16 @@ ssh tests2 "cd $APP && export PATH=\$HOME/bin:\$HOME/tools/node/bin:\$HOME/.open
   setsid env PORT=3000 HOSTNAME=127.0.0.1 node server.js > app.log 2>&1 < /dev/null &"
 sleep 3
 
-echo "== restart tunnel"
-ssh tests2 "pkill -x cloudflared 2>/dev/null || true; sleep 1; \
-  cd $APP && setsid cloudflared tunnel --config /dev/null --url http://127.0.0.1:3000 --no-autoupdate > tunnel.log 2>&1 < /dev/null &"
+echo "== restart named tunnel"
+ssh tests2 "pkill -f '^cloudflared tunnel --config /home/ubuntu/.cloudflared/chat-to-video.yml run' 2>/dev/null || true; sleep 1; \
+  cd $APP && setsid cloudflared tunnel --config /home/ubuntu/.cloudflared/chat-to-video.yml run > named-tunnel.log 2>&1 < /dev/null &"
 sleep 6
 
-URL=$(ssh tests2 "grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' $APP/tunnel.log | head -1" | tr -d '\r')
-if [ -z "$URL" ]; then
-  echo "tunnel URL not found; tail:" >&2
-  ssh tests2 "tail -20 $APP/tunnel.log" >&2
+URL="https://testings.thetrillioniar.me"
+if ! ssh tests2 "ps -eo args | grep -q '^cloudflared tunnel --config /home/ubuntu/.cloudflared/chat-to-video.yml run'"; then
+  echo "named tunnel is not running; tail:" >&2
+  ssh tests2 "tail -20 $APP/named-tunnel.log" >&2
   exit 1
 fi
 echo "LIVE_URL=$URL"
-curl -fsS -m 10 "$URL/api/health" && echo
+curl -fsS -m 15 "$URL/api/health" && echo

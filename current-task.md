@@ -11,7 +11,7 @@ the public URL end to end: register → chat → 10s video, 1:1 PNG, and narrate
 - [x] Done
 
 ## Notes
-- Live: https://assigned-call-camcorders-nevertheless.trycloudflare.com
+- Live: https://testings.thetrillioniar.me (named Cloudflare tunnel)
 - Verification logs: `.agent-logs/remote-smoke.log`, `remote-image.log`, `remote-voice.log`
 - Local checks: `npx tsc --noEmit`, `npm run build`, `scripts/e2e-local.sh`, UI smoke
 - Deploy guide: `docs/deploy.md`; one-command redeploy: `scripts/deploy-tests2.sh`

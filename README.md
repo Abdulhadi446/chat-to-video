@@ -4,7 +4,7 @@ Describe a video in chat. Get a rendered vertical MP4 (or a designed still) back
 
 Built in a 12-hour hackathon. It is **not** a generative video model: an LLM turns your chat into a storyboard, and a deterministic FFmpeg pipeline renders real scenes, captions, motion, and optional narration. Hard requests can be escalated to an autonomous `opencode` agent that works in a sandboxed job directory.
 
-**Live demo:** https://assigned-call-camcorders-nevertheless.trycloudflare.com  
+**Live demo:** https://testings.thetrillioniar.me  
 **Repo:** https://github.com/Abdulhadi446/chat-to-video
 
 ## What works
@@ -83,7 +83,7 @@ FFmpeg must be on `PATH` (or set `FFMPEG_PATH`). For narration:
 
 ## Deploy
 
-Deployed on a small VPS behind a Cloudflare quick tunnel; renders run at 720p on 2 vCPU. See `docs/deploy.md` for the exact steps.
+Deployed on a small VPS behind a Cloudflare named tunnel; renders run at 720p on 2 vCPU. See `docs/deploy.md` for the exact steps.
 
 ## Notes / limitations
 
