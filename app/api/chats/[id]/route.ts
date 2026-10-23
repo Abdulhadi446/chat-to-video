@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server"
+import { unstable_rethrow } from "next/navigation"
 
 import { requireUser } from "@/lib/auth"
 import dbApi from "@/lib/db"
@@ -18,6 +19,7 @@ async function authUser(): Promise<User | Response> {
   try {
     return await requireUser()
   } catch (err) {
+    unstable_rethrow(err)
     if (err instanceof Response) return err
     console.error("[chats/:id] auth failed", err)
     return jsonError("Something went wrong", 500)
@@ -47,7 +49,10 @@ export async function GET(_req: NextRequest, { params }: RouteParams): Promise<R
     return Response.json({
       chat,
       messages: dbApi.listMessages(id),
-      assets: dbApi.listAssets(id),
+      assets: dbApi.listAssets(id).map((asset) => ({
+        ...asset,
+        job: dbApi.latestJob(asset.id),
+      })),
     })
   } catch (err) {
     console.error("[chats/:id GET]", err)

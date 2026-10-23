@@ -1,12 +1,11 @@
 import { NextRequest } from "next/server"
 
 import { getSessionUser } from "@/lib/auth"
-import { decideMode } from "@/lib/ai/decision"
+import { decideMode, type ModeDecision } from "@/lib/ai/decision"
 import { parseIntent, type Intent } from "@/lib/ai/intent"
 import { createStoryboard } from "@/lib/ai/storyboard"
 import dbApi from "@/lib/db"
 import { enqueueJob } from "@/lib/jobs/runner"
-import type { ModeDecision } from "@/lib/ai/decision"
 
 function unauthorized(): Response {
   return Response.json({ error: "Unauthorized" }, { status: 401 })

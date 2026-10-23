@@ -4,7 +4,7 @@ Describe a video in chat. Get a rendered vertical MP4 (or a designed still) back
 
 Built in a 12-hour hackathon. It is **not** a generative video model: an LLM turns your chat into a storyboard, and a deterministic FFmpeg pipeline renders real scenes, captions, motion, and optional narration. Hard requests can be escalated to an autonomous `opencode` agent that works in a sandboxed job directory.
 
-**Live demo:** _added after deploy_  
+**Live demo:** https://assigned-call-camcorders-nevertheless.trycloudflare.com  
 **Repo:** https://github.com/Abdulhadi446/chat-to-video
 
 ## What works
@@ -22,9 +22,9 @@ Built in a 12-hour hackathon. It is **not** a generative video model: an LLM tur
 ## Demo flow
 
 1. Register (or log in) → land in `/chat`.
-2. Type: *"Make a 10 second vertical video about a coffee shop opening at sunrise, warm and cinematic, with a voiceover."*
+2. Click **VOICE** in the composer (silent is the default), then type: *"Make a 10 second vertical video about a coffee shop opening at sunrise, warm and cinematic, with a voiceover."*
 3. Watch the asset card move through planning → voice → assets → rendering → done.
-4. Play the MP4 in the chat, download it, or retry.
+4. Play the MP4 in the chat, download it, or retry. Switch back to **SILENT** for a faster render.
 5. Try *"Make a square poster for a synthwave music night"* for image mode.
 
 ## Stack
@@ -61,13 +61,16 @@ FFmpeg must be on `PATH` (or set `FFMPEG_PATH`). For narration:
 | --- | --- |
 | `OPENROUTER_API_KEY` | chat + storyboard model |
 | `OPENROUTER_MODEL` | default `openai/gpt-4o-mini` |
+| `OPENROUTER_FALLBACK_MODEL` | used when the primary returns 402/404/429; default free Cohere model |
 | `THETRILLIONIAR_API_KEY` | difficulty decision |
 | `THETRILLIONIAR_BASE_URL` | default `https://thetrillioniar.me` |
+| `THETRILLIONIAR_TIMEOUT_MS` | decision timeout, default 15000; set 25000 for this API |
 | `DATABASE_URL` | default `file:./data/app.db` |
 | `FFMPEG_PATH` | optional binary override |
 | `PIPER_PATH` | optional Piper binary override |
 | `OPENCODE_MODEL` | optional model for the agent lane |
 | `OPENCODE_BIN` | optional opencode binary override |
+| `OPENCODE_TIMEOUT_MS` | agent timeout before deterministic fallback; default 180000 |
 
 ## Scripts
 
@@ -75,6 +78,8 @@ FFmpeg must be on `PATH` (or set `FFMPEG_PATH`). For narration:
 - `./scripts/setup-piper.sh` — local TTS binary + voice
 - `node scripts/render-demo.mjs` — render a sample without the app
 - `./scripts/smoke.sh` — end-to-end API smoke test against a running server
+- `./scripts/stage-standalone.sh` — stage a deploy-like app root for production testing
+- `./scripts/deploy-tests2.sh` — sync the standalone build to tests2 and restart the tunnel
 
 ## Deploy
 

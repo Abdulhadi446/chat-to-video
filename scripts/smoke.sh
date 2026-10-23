@@ -51,7 +51,8 @@ echo "== result =="
 BODY=$(curl -fsS -b "$JAR" "$BASE/api/jobs/$JOB_ID")
 FILE=$(echo "$BODY" | j 'v.asset.filePath')
 echo "file: $FILE"
-curl -fsS -b "$JAR" "$BASE/api/files/$FILE" -o /tmp/smoke-output.bin
+REL="${FILE#data/}"
+curl -fsS -b "$JAR" "$BASE/api/files/$REL" -o /tmp/smoke-output.bin
 ls -lh /tmp/smoke-output.bin
 ffprobe -v error -show_entries format=duration,size:stream=codec_name,width,height -of default=nw=1 /tmp/smoke-output.bin
 

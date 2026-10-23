@@ -18,6 +18,7 @@ Ship a working, demo-able AI app in ~12 hours. Read TASK.md first for the challe
 - If a TODO's mcp is available use it anf keep it updated.
 - Use all the mcp's the second you need them.
 - Run all the commands in background to save time and dont do work yourself use sub agents becuase multiple sub-agents are faster than a single dev.
+- Use diffrent models for diffrent sub-agents yes they can overlap but try to use diffrent models for diffrent sub-agents and only use free models.
 
 ## Stack
 
@@ -45,4 +46,3 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
-

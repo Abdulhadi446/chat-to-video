@@ -56,6 +56,11 @@ next-env.d.ts
 # app data
 /data/
 /tools/
+/.run/
+
+# local editor / agent tooling
+/.vscode/
+/.opencode/
 
 # next build
 /.next/

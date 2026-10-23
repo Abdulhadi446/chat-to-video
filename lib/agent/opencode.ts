@@ -18,13 +18,17 @@ import type { Asset, VideoSpec } from "../types"
  *        are non-fatal and simply omit thumbPath.
  *
  * The caller (lib/jobs) treats null as "agent path unavailable" and falls back
- * to the deterministic renderer. The whole agent run is limited to 5 minutes;
- * on timeout SIGTERM is sent to the process group, followed by SIGKILL 5s
- * later. stdout/stderr go to data/jobs/agent-<assetId>-<runId>/agent.log,
- * with the last 4KB retained for agent-error.log.
+ * to the deterministic renderer. The whole agent run is limited to
+ * OPENCODE_TIMEOUT_MS (default 3 minutes); on timeout SIGTERM is sent to the
+ * process group, followed by SIGKILL 5s later. stdout/stderr go to
+ * data/jobs/agent-<assetId>-<runId>/agent.log, with the last 4KB retained for
+ * agent-error.log.
  */
 
-export const OPENCODE_TIMEOUT_MS = 5 * 60 * 1000
+export const OPENCODE_TIMEOUT_MS = (() => {
+  const configured = Number(process.env.OPENCODE_TIMEOUT_MS)
+  return Number.isFinite(configured) && configured >= 30_000 ? configured : 180_000
+})()
 
 const VERSION_TIMEOUT_MS = 5_000
 const KILL_GRACE_MS = 5_000
@@ -321,7 +325,7 @@ interface AgentRunState {
 
 /**
  * Spawn `opencode run --auto [--model ...] "<fixed prompt>"` with cwd=workdir.
- * Bounds the whole run to 5 minutes, then SIGTERM -> SIGKILL on the group.
+ * Bounds the whole run to OPENCODE_TIMEOUT_MS, then SIGTERM -> SIGKILL on the group.
  */
 function startAgent(
   bin: string,

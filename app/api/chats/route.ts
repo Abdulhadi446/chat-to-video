@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server"
+import { unstable_rethrow } from "next/navigation"
 
 import { requireUser } from "@/lib/auth"
 import dbApi from "@/lib/db"
@@ -12,6 +13,7 @@ async function authUser(): Promise<User | Response> {
   try {
     return await requireUser()
   } catch (err) {
+    unstable_rethrow(err)
     if (err instanceof Response) return err
     console.error("[chats] auth failed", err)
     return jsonError("Something went wrong", 500)

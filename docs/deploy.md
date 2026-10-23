@@ -9,7 +9,7 @@ Target: `tests2` (Ubuntu 24.04, 2 vCPU, 952 MB RAM + 10 GB swap). Renders at 720
 | ffmpeg / ffprobe | `/home/ubuntu/bin/ffmpeg`, `/home/ubuntu/bin/ffprobe` |
 | Node 26 | `/home/ubuntu/tools/node/bin/node` (symlinked into `~/bin`) |
 | Piper + voice | `/home/ubuntu/tools/piper/piper`, `voices/en_US-lessac-medium.onnx` |
-| opencode | `/home/ubuntu/bin/opencode` |
+| opencode | `/home/ubuntu/.opencode/bin/opencode` (v2.1.1) |
 | App | `/home/ubuntu/apps/chat-to-video` |
 | Data | `data/{uploads,outputs,jobs}` (persist across deploys) |
 | Port | `3000` (3100 is occupied) |
@@ -53,8 +53,11 @@ Production `.env` additions:
 ```dotenv
 NODE_ENV=production
 FFMPEG_PATH=/home/ubuntu/bin/ffmpeg
+FFPROBE_PATH=/home/ubuntu/bin/ffprobe
 PIPER_PATH=/home/ubuntu/tools/piper/piper
-OPENCODE_BIN=/home/ubuntu/bin/opencode
+PIPER_MODEL=/home/ubuntu/tools/piper/voices/en_US-lessac-medium.onnx
+OPENCODE_BIN=/home/ubuntu/.opencode/bin/opencode
+OPENCODE_TIMEOUT_MS=180000
 DATABASE_URL=file:./data/app.db
 ```
 

@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
+  outputFileTracingExcludes: {
+    "/*": ["./data/**/*", "./tools/**/*", "./.env*", "./.agent-logs/**/*"],
+  },
   turbopack: {
     rules: {
       "*.css": {

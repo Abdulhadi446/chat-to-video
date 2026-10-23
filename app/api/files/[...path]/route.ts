@@ -5,6 +5,7 @@ import { Readable } from "node:stream"
 import type { NextRequest } from "next/server"
 
 import { requireUser } from "@/lib/auth"
+import { unstable_rethrow } from "next/navigation"
 
 type RouteParams = { params: Promise<{ path: string[] }> }
 
@@ -76,6 +77,7 @@ export async function GET(
   try {
     await requireUser()
   } catch (err) {
+    unstable_rethrow(err)
     if (err instanceof Response) return err
     console.error("[files] auth failed", err)
     return jsonError("Something went wrong", 500)

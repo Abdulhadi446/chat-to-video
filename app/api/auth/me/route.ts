@@ -1,4 +1,5 @@
 import { getSessionUser } from "@/lib/auth"
+import { unstable_rethrow } from "next/navigation"
 
 export async function GET(): Promise<Response> {
   try {
@@ -8,6 +9,7 @@ export async function GET(): Promise<Response> {
     }
     return Response.json({ user })
   } catch (err) {
+    unstable_rethrow(err)
     console.error("[auth/me]", err)
     return Response.json({ error: "Something went wrong" }, { status: 500 })
   }
