@@ -4,10 +4,10 @@ Read `TASK.md`, `lib/types.ts`, `lib/db.ts` before coding. Do not edit files out
 No new npm dependencies. Tailwind v4 + React 19 + Next 16.4.2. Node 26, `node:sqlite`.
 
 ## Env
-- `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (default `openai/gpt-4o-mini`), base `https://openrouter.ai/api/v1`
+- `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (default `nvidia/nemotron-3.5-super-vl:free`; fallback `cohere/north-mini-code:free`), base `https://openrouter.ai/api/v1`
 - `THETRILLIONIAR_API_KEY`, base `https://thetrillioniar.me`, decision `POST /v1/systemone`
 - `OPENCODE_MODEL` (optional), `FFMPEG_PATH` (default `ffmpeg`), `PIPER_PATH` (default `tools/piper/piper`)
-- Files: `data/outputs/<assetId>/final.mp4|final.png|thumb.jpg`, work: `data/jobs/<jobId>/`
+- Files: `data/outputs/<assetId>/final.mp4|final.png|thumb.jpg`, agent work: `$TMPDIR/chat-to-video-jobs/<jobId>/` (outside the repo so opencode cannot attach to the app project)
 - Logs: `.agent-logs/`
 
 ## Lane ownership (do not write outside)
@@ -86,7 +86,7 @@ Load job/asset via `lib/db.ts`; update `progress/stage`; deterministic = optiona
 ```ts
 runOpencodeJob(input:{asset:Asset; spec:VideoSpec; outDir:string; onProgress:(p:{progress:number;stage:string})=>void}): Promise<{filePath:string; thumbPath?:string} | null>
 ```
-`spawn("opencode", ["run","--auto", prompt])` in `data/jobs/<jobId>/`, `cwd` there, copy `video-generation.md` as `BRIEF.md`, timeout 5 min, kill tree on timeout, return null on any failure. `opencode` may be missing — return null immediately.
+`spawn("opencode", ["run","--standalone","--auto", prompt])` in a neutral temp workspace (`AGENT_WORKDIR_ROOT`, default `$TMPDIR/chat-to-video-jobs`), `cwd`/`PWD` set there, copy `video-generation.md` as `BRIEF.md`, timeout `OPENCODE_TIMEOUT_MS` (default 3 min), kill tree on timeout, return null on any failure. `opencode` may be missing — return null immediately.
 
 ## UI
 - Dark studio theme, violet accent, sidebar 280px, mobile drawer, chat column max-w-3xl.

@@ -2,9 +2,9 @@
 
 Describe a video in chat. Get a rendered vertical MP4 (or a designed still) back in the same conversation.
 
-Built in a 12-hour hackathon. It is **not** a generative video model: an LLM turns your chat into a storyboard, and a deterministic FFmpeg pipeline renders real scenes, captions, motion, and optional narration. Hard requests can be escalated to an autonomous `opencode` agent that works in a sandboxed job directory.
+Built as a hackathon preparation project. It is **not deployed** — there is no live URL. It is **not** a generative video model: an LLM turns your chat into a storyboard, and a deterministic FFmpeg pipeline renders real scenes, captions, motion, and optional narration. Hard requests can be escalated to an autonomous `opencode` agent that works in a sandboxed job directory.
 
-**Live demo:** https://testings.thetrillioniar.me  
+**Status:** preparation project, not deployed.  
 **Repo:** https://github.com/Abdulhadi446/chat-to-video
 
 ## What works
@@ -60,8 +60,8 @@ FFmpeg must be on `PATH` (or set `FFMPEG_PATH`). For narration:
 | Variable | Purpose |
 | --- | --- |
 | `OPENROUTER_API_KEY` | chat + storyboard model |
-| `OPENROUTER_MODEL` | default `openai/gpt-4o-mini` |
-| `OPENROUTER_FALLBACK_MODEL` | used when the primary returns 402/404/429; default free Cohere model |
+| `OPENROUTER_MODEL` | default free `nvidia/nemotron-3.5-super-vl:free` |
+| `OPENROUTER_FALLBACK_MODEL` | used when the primary fails; default free `cohere/north-mini-code:free` |
 | `THETRILLIONIAR_API_KEY` | difficulty decision |
 | `THETRILLIONIAR_BASE_URL` | default `https://thetrillioniar.me` |
 | `THETRILLIONIAR_TIMEOUT_MS` | decision timeout, default 15000; set 25000 for this API |
@@ -78,12 +78,12 @@ FFmpeg must be on `PATH` (or set `FFMPEG_PATH`). For narration:
 - `./scripts/setup-piper.sh` — local TTS binary + voice
 - `node scripts/render-demo.mjs` — render a sample without the app
 - `./scripts/smoke.sh` — end-to-end API smoke test against a running server
-- `./scripts/stage-standalone.sh` — stage a deploy-like app root for production testing
-- `./scripts/deploy-tests2.sh` — sync the standalone build to tests2 and restart the tunnel
+- `./scripts/stage-standalone.sh` — stage a deploy-like app root for production testing (reference only)
+- `./scripts/deploy-tests2.sh` — reference deployment script; not currently used
 
 ## Deploy
 
-Deployed on a small VPS behind a Cloudflare named tunnel; renders run at 720p on 2 vCPU. See `docs/deploy.md` for the exact steps.
+**Not deployed.** This was a preparation project; the tests2 deployment has been removed and the `testings.thetrillioniar.me` DNS record/tunnel was deleted. `docs/deploy.md` and `scripts/deploy-tests2.sh` remain only as reference for running it on a VPS.
 
 ## Notes / limitations
 

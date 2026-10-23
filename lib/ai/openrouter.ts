@@ -1,7 +1,14 @@
 import OpenAI from "openai"
+import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions"
 
 export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-export const DEFAULT_OPENROUTER_MODEL = "openai/gpt-4o-mini"
+/**
+ * Free Nemotron 3.5 Super is a strong 1M-context model that returns clean
+ * storyboard JSON in ~3s with reasoning disabled. The old paid default
+ * (gpt-4o-mini) 402s on this key.
+ */
+export const DEFAULT_OPENROUTER_MODEL = "nvidia/nemotron-3.5-super-vl:free"
+export const DEFAULT_OPENROUTER_FALLBACK_MODEL = "cohere/north-mini-code:free"
 /** Hard ceiling for a single completion request (task requirement: 45s, one retry). */
 export const OPENROUTER_TIMEOUT_MS = 45_000
 
@@ -49,19 +56,23 @@ export async function chatCompletion(args: {
   maxTokens?: number
 }): Promise<string> {
   const primary = openRouterModel()
-  const fallback = process.env.OPENROUTER_FALLBACK_MODEL?.trim()
+  const fallback = process.env.OPENROUTER_FALLBACK_MODEL?.trim() || DEFAULT_OPENROUTER_FALLBACK_MODEL
   const models = fallback && fallback !== primary ? [primary, fallback] : [primary]
 
   let lastError: unknown = null
 
   for (const model of models) {
     try {
-      const completion = await getClient().chat.completions.create({
+      const params = {
         model,
         messages: args.messages,
         temperature: args.temperature ?? 0.4,
         max_tokens: args.maxTokens ?? 1400,
-      })
+        // Nemotron is a hybrid reasoning model. Without this it can spend the
+        // whole token budget on hidden reasoning and return empty content.
+        reasoning: { enabled: false },
+      } as ChatCompletionCreateParamsNonStreaming
+      const completion = await getClient().chat.completions.create(params)
       const content = completion.choices?.[0]?.message?.content
       if (typeof content !== "string" || !content.trim()) {
         throw new Error("OpenRouter returned an empty completion")
@@ -69,12 +80,13 @@ export async function chatCompletion(args: {
       return content
     } catch (err) {
       lastError = err
-      // A dead key/provider is worth one retry on the configured fallback.
       const status = (err as { status?: number })?.status
-      if (!fallback || (status !== 402 && status !== 404 && status !== 429)) {
-        throw err
-      }
-      console.warn(`[openrouter] ${model} failed with ${status}; trying ${fallback}`)
+      // Bad credentials affect every fallback; everything else (402/404/429,
+      // provider hiccups, empty output) is worth trying the next model.
+      if (!fallback || status === 401 || status === 403) throw err
+      console.warn(
+        `[openrouter] ${model} failed${status ? ` with ${status}` : ""}; trying ${fallback}`,
+      )
     }
   }
 

@@ -1,8 +1,11 @@
-# Deploy (tests2 + Cloudflare named tunnel)
+# Deploy (tests2 + Cloudflare named tunnel) — REFERENCE ONLY
 
 Target: `tests2` (Ubuntu 24.04, 2 vCPU, 952 MB RAM + 10 GB swap). Renders at 720p; builds happen **locally** because the remote build is memory-constrained.
 
-Public URL: **https://testings.thetrillioniar.me** (stable named tunnel).
+> **This project is not deployed.** The tests2 app, tunnel, and `testings.thetrillioniar.me`
+> DNS record were deleted. Keep this document only as a runbook if you choose to deploy again.
+
+Public URL (only when deployed): **https://testings.thetrillioniar.me** (stable named tunnel).
 
 ## Remote layout (already provisioned)
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Deploy the locally built standalone app to tests2 and (re)start the named tunnel.
-# Public URL: https://testings.thetrillioniar.me
+# REFERENCE ONLY — this project is not deployed; tests2 was cleaned up.
+# Public URL (when deployed): https://testings.thetrillioniar.me
 # Usage: ./scripts/deploy-tests2.sh          (reuses .next/standalone)
 #        SKIP_BUILD=0 ./scripts/deploy-tests2.sh  (rebuild first)
 set -euo pipefail
@@ -54,10 +55,14 @@ ssh tests2 "cd $APP && export PATH=\$HOME/bin:\$HOME/tools/node/bin:\$HOME/.open
   setsid env PORT=3000 HOSTNAME=127.0.0.1 node server.js > app.log 2>&1 < /dev/null &"
 sleep 3
 
-echo "== restart named tunnel"
-ssh tests2 "pkill -f '^cloudflared tunnel --config /home/ubuntu/.cloudflared/chat-to-video.yml run' 2>/dev/null || true; sleep 1; \
-  cd $APP && setsid cloudflared tunnel --config /home/ubuntu/.cloudflared/chat-to-video.yml run > named-tunnel.log 2>&1 < /dev/null &"
-sleep 6
+echo "== ensure named tunnel"
+# The named tunnel is independent of app code. Restarting it is unnecessary and
+# can hang a non-interactive SSH session, so only start it when it is absent.
+if ! ssh tests2 "ps -eo args | grep -q '^cloudflared tunnel --config /home/ubuntu/.cloudflared/chat-to-video.yml run'"; then
+  echo "named tunnel not running; starting it"
+  ssh tests2 "cd $APP && setsid cloudflared tunnel --config /home/ubuntu/.cloudflared/chat-to-video.yml run > named-tunnel.log 2>&1 < /dev/null &" || true
+  sleep 6
+fi
 
 URL="https://testings.thetrillioniar.me"
 if ! ssh tests2 "ps -eo args | grep -q '^cloudflared tunnel --config /home/ubuntu/.cloudflared/chat-to-video.yml run'"; then

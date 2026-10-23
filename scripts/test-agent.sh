@@ -91,7 +91,7 @@ This can take up to 5 minutes and may consume paid model credits.
    router returns "agent". Confirm the job's mode is "agent":
        GET /api/jobs/<jobId>   ->   { job: { mode: "agent", ... } }
 4. Follow the run:
-       tail -f data/jobs/agent-<assetId>-*/agent.log
+       tail -f /tmp/chat-to-video-jobs/agent-<assetId>-*/agent.log
    The workspace also contains BRIEF.md (prompt + VideoSpec + requirements)
    and a copy of video-generation.md.
 5. Success: data/outputs/<assetId>/final.mp4 and thumb.jpg exist, and the

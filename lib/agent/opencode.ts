@@ -2,6 +2,7 @@ import { spawn, type ChildProcess } from "node:child_process"
 import { randomBytes } from "node:crypto"
 import { createWriteStream } from "node:fs"
 import { copyFile, mkdir, readdir, stat, writeFile } from "node:fs/promises"
+import os from "node:os"
 import path from "node:path"
 import type { Asset, VideoSpec } from "../types"
 
@@ -21,8 +22,9 @@ import type { Asset, VideoSpec } from "../types"
  * to the deterministic renderer. The whole agent run is limited to
  * OPENCODE_TIMEOUT_MS (default 3 minutes); on timeout SIGTERM is sent to the
  * process group, followed by SIGKILL 5s later. stdout/stderr go to
- * data/jobs/agent-<assetId>-<runId>/agent.log, with the last 4KB retained for
- * agent-error.log.
+ * <AGENT_WORKDIR_ROOT>/agent-<assetId>-<runId>/agent.log (default OS temp dir,
+ * outside the repo so opencode cannot wander into the app project), with the
+ * last 4KB retained for agent-error.log.
  */
 
 export const OPENCODE_TIMEOUT_MS = (() => {
@@ -222,7 +224,14 @@ ${JSON.stringify(spec, null, 2)}
 
 ## Production instructions
 
-Read \`video-generation.md\` (copied into this directory next to this brief) for the full production workflow: scene design, animation, transitions, captions, optional TTS, rendering, and validation. Use FFmpeg or any already-available local tooling; do not spend time on unrelated research. When done, the only thing that matters is a valid \`final.mp4\`.
+Read \`video-generation.md\` (copied into this directory next to this brief) for the full production workflow: scene design, animation, transitions, captions, optional TTS, rendering, and validation.
+
+## Environment and time budget
+
+- Available: \`ffmpeg\`, \`ffprobe\`, \`node\`, \`python3\`, and system fonts. No sudo, no network package installs, no \`pip install\`, no \`npm install\`.
+- You have a strict wall-clock budget (about 3 minutes). Do not explore the host, search the web, or install tooling. Start rendering with FFmpeg immediately.
+- Prefer FFmpeg filters (\`drawtext\`, \`zoompan\`, gradients, \`xfade\`) or generate PNG frames with an already-installed tool, then encode.
+- Use FFmpeg or any already-available local tooling; do not spend time on unrelated research. When done, the only thing that matters is a valid \`final.mp4\`.
 `
 
   return brief.slice(0, MAX_BRIEF_CHARS)
@@ -324,7 +333,7 @@ interface AgentRunState {
 }
 
 /**
- * Spawn `opencode run --auto [--model ...] "<fixed prompt>"` with cwd=workdir.
+ * Spawn `opencode run --standalone --auto [--model ...] "<fixed prompt>"` with cwd=workdir.
  * Bounds the whole run to OPENCODE_TIMEOUT_MS, then SIGTERM -> SIGKILL on the group.
  */
 function startAgent(
@@ -356,7 +365,9 @@ function startAgent(
   try {
     child = spawn(bin, args, {
       cwd: workdir,
-      env: { ...process.env, CI: "1" },
+      // opencode trusts PWD over the actual process cwd for project discovery.
+      // Without this it walks back to the server's app root / git repo.
+      env: { ...process.env, CI: "1", PWD: workdir, OLDPWD: workdir },
       detached: true,
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,
@@ -582,7 +593,14 @@ export async function runOpencodeJob({
 
   const assetId = safeSegment(asset.id, "asset")
   const runId = `${Date.now().toString(36)}-${randomBytes(3).toString("hex")}`
-  const workdir = path.resolve(process.cwd(), "data", "jobs", `agent-${assetId}-${runId}`)
+  // Keep the workspace OUTSIDE the git repo. Even with --standalone, opencode
+  // walks up to the nearest .git and runs the agent from that root, which made
+  // it read TASK.md and write renders outside the job directory. A neutral
+  // temp root guarantees cwd == workspace and keeps agent output contained.
+  const workspaceRoot =
+    process.env.AGENT_WORKDIR_ROOT?.trim() ||
+    path.join(os.tmpdir(), "chat-to-video-jobs")
+  const workdir = path.resolve(workspaceRoot, `agent-${assetId}-${runId}`)
   const logPath = path.join(workdir, "agent.log")
 
   let started = false
@@ -600,8 +618,11 @@ export async function runOpencodeJob({
     await copyFile(guideSource, path.join(workdir, "video-generation.md"))
 
     // 4. Spawn non-interactively. Args are an array; no shell interpolation.
+    // --standalone keeps the run's project root at `workdir`; the shared
+    // background service otherwise attaches to a previously opened repo and
+    // writes outputs outside the job directory.
     const model = process.env.OPENCODE_MODEL?.trim().slice(0, MAX_MODEL_CHARS)
-    const args = ["run", "--auto"]
+    const args = ["run", "--standalone", "--auto"]
     if (model) args.push("--model", model)
     args.push(buildAgentPrompt(spec))
 

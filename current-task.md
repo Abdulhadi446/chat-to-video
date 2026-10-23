@@ -1,18 +1,17 @@
 # Current Task
 
 ## Task
-M8 — Deploy and final verification (see TASK.md) — COMPLETE
+Project cleanup — undeployed and tests2 cleaned
 
 ## Description
-Shipped the verified standalone build to tests2 behind a Cloudflare quick tunnel and confirmed
-the public URL end to end: register → chat → 10s video, 1:1 PNG, and narrated 10s MP4 with AAC.
+This is a hackathon preparation project, not a deployed app. The tests2 server was
+torn down and all deployment artifacts created for this project were removed.
 
 ## Status
 - [x] Done
 
 ## Notes
-- Live: https://testings.thetrillioniar.me (named Cloudflare tunnel)
-- Verification logs: `.agent-logs/remote-smoke.log`, `remote-image.log`, `remote-voice.log`
-- Local checks: `npx tsc --noEmit`, `npm run build`, `scripts/e2e-local.sh`, UI smoke
-- Deploy guide: `docs/deploy.md`; one-command redeploy: `scripts/deploy-tests2.sh`
-- Quick-tunnel URL changes if the tunnel restarts.
+- No live URL. The `testings.thetrillioniar.me` CNAME and the `chat-to-video` Cloudflare tunnel were deleted.
+- tests2 cleaned: app dir, data, temp job workspaces, app-specific Node/FFmpeg/Piper binaries, and the temporary tunnel config were removed; the pre-existing triage-desk tunnel was left untouched.
+- Local verification remains in `.agent-logs/`: `tsc`, `build-hard-final.log`, `hard-e2e-pwd.log`, `live-hard-decision.log`.
+- `docs/deploy.md` and `scripts/deploy-tests2.sh` are retained only as reference.

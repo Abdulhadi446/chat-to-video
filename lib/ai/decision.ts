@@ -13,7 +13,12 @@ const DECISION_TIMEOUT_MS = Math.max(
   1_000,
   Number(process.env.THETRILLIONIAR_TIMEOUT_MS) || 15_000,
 )
-const HARD_CONFIDENCE_THRESHOLD = 0.6
+/**
+ * The 151M router is conservative: it often labels genuinely hard requests
+ * "hard" with 0.35-0.45 confidence. Explicit production requirements below
+ * therefore take precedence over its confidence score.
+ */
+const HARD_CONFIDENCE_THRESHOLD = 0.4
 
 interface ComplexitySignals {
   promptWords: number
@@ -22,6 +27,8 @@ interface ComplexitySignals {
   manyAssets: boolean
   preciseSync: boolean
   customCode: boolean
+  explicitHard: boolean
+  webReference: boolean
 }
 
 function complexitySignals(intent: Intent, text: string): ComplexitySignals {
@@ -31,23 +38,44 @@ function complexitySignals(intent: Intent, text: string): ComplexitySignals {
     promptWords: prompt ? prompt.split(/\s+/).length : 0,
     scenesHint: intent.duration <= 10 ? 3 : intent.duration <= 30 ? 5 : 8,
     customAnimation:
-      /\b(?:custom|bespoke|motion\s*design|animated|animation|kinetic|3d|3-d|parallax|morph|intro sequence)\b/i.test(prompt),
-    manyAssets: (assetMentions?.length ?? 0) >= 3 || /\b(?:many|multiple|several|dozens)\b/i.test(prompt),
+      /\b(?:custom|bespoke|motion\s*design|motion\s*graphics|animated|animation|kinetic|3d|3-d|parallax|morph|intro sequence|logo animation|stop[\s-]?motion|after effects|blender|explainer animation|whiteboard)\b/i.test(prompt),
+    manyAssets:
+      (assetMentions?.length ?? 0) >= 3 ||
+      /\b(?:many|multiple|several|dozens|collage|montage)\b/i.test(prompt),
     preciseSync:
-      /\b(?:sync|synchroni[sz]e|lip\s*sync|beat[\s-]?match|timed to|match the (?:music|beat|audio))\b/i.test(prompt),
+      /\b(?:sync|synchroni[sz]e|lip\s*sync|beat[\s-]?match|timed to|match the (?:music|beat|audio)|bpm|audio[\s-]?reactive|music video)\b/i.test(prompt),
     customCode:
-      /\b(?:code|custom\s+html|canvas|webgl|three\.?js|hyperframes|compositing|composite|ffmpeg filter)\b/i.test(prompt),
+      /\b(?:code|custom\s+html|canvas|webgl|three\.?js|hyperframes|compositing|composite|ffmpeg filter|shader|svg|lottie)\b/i.test(prompt),
+    // Respect the user's own classification: "this is a hard task", "complex brief".
+    explicitHard:
+      /\b(?:hard|complex|difficult|advanced|ambitious|challenging)\s+(?:task|brief|video|project|one)\b/i.test(prompt),
+    // A real URL usually means research the site (agent), not a text-only render.
+    webReference: /(?:https?:\/\/|www\.)/i.test(prompt),
   }
 }
 
 function summariseSignals(signals: ComplexitySignals): string {
   const flags = [
+    signals.explicitHard ? "explicit hard brief" : null,
     signals.customAnimation ? "custom animation" : null,
     signals.manyAssets ? "many assets" : null,
     signals.preciseSync ? "precise sync" : null,
     signals.customCode ? "custom code" : null,
+    signals.webReference ? "web reference" : null,
   ].filter(Boolean)
   return flags.length ? flags.join(", ") : "plain scenes/text, simple assets"
+}
+
+/** Explicitly hard production requirements the deterministic renderer cannot fulfil. */
+function requiresAgent(signals: ComplexitySignals): boolean {
+  return (
+    signals.explicitHard ||
+    signals.customAnimation ||
+    signals.manyAssets ||
+    signals.preciseSync ||
+    signals.customCode ||
+    signals.webReference
+  )
 }
 
 function readConfidence(source: unknown, fallback: unknown): number {
@@ -107,12 +135,22 @@ function readAbstention(payload: Record<string, unknown>, answers: Record<string
  */
 export async function decideMode(intent: Intent, text = ""): Promise<ModeDecision> {
   const signals = complexitySignals(intent, text)
+  const signalSummary = summariseSignals(signals)
+
+  // Requirements that only the autonomous agent can satisfy beat both the
+  // router's low confidence scores and its occasional timeouts.
+  if (requiresAgent(signals)) {
+    return {
+      mode: "agent",
+      reason: `Agent pipeline — request needs ${signalSummary}`,
+    }
+  }
 
   const apiKey = process.env.THETRILLIONIAR_API_KEY?.trim()
   if (!apiKey) {
     return {
       mode: "deterministic",
-      reason: `Deterministic pipeline — decision API key not configured; ${summariseSignals(signals)}`,
+      reason: `Deterministic pipeline — decision API key not configured; ${signalSummary}`,
     }
   }
 
@@ -206,15 +244,18 @@ export async function decideMode(intent: Intent, text = ""): Promise<ModeDecisio
     if (abstention) {
       return {
         mode: "deterministic",
-        reason: `Deterministic fallback — Trillionir abstained; ${summariseSignals(signals)}`,
+        reason: `Deterministic fallback — Trillionir abstained; ${signalSummary}`,
       }
     }
 
     return {
       mode: "deterministic",
-      reason: `Deterministic pipeline — Trillionir chose ${
-        choice || "easy"
-      } (confidence ${confidence.toFixed(2)})${rationaleText}`,
+      reason:
+        choice === "hard"
+          ? `Deterministic pipeline — no agent-only requirements detected; Trillionir leaned hard (confidence ${confidence.toFixed(2)})${rationaleText}`
+          : `Deterministic pipeline — Trillionir chose ${
+              choice || "easy"
+            } (confidence ${confidence.toFixed(2)})${rationaleText}`,
     }
   } catch (err) {
     const message = (err as Error)?.name === "TimeoutError" ? "timeout" : (err as Error)?.message ?? "error"
