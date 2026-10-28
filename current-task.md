@@ -1,20 +1,19 @@
 # Current Task
 
 ## Task
-M8 — Deployed to tests2 for testing
+Project cleanup — undeployed and tests2 cleaned
 
 ## Description
-Redeployed the standalone build to tests2 and recreated the stable Cloudflare tunnel
-for `testings.thetrillioniar.me`. The previous hostname target was replaced; unrelated
-tests2 apps (Fathom, AuraCounter, Mindcraft) were left running.
+This is a hackathon preparation project, not a deployed app. The tests2 deployment was
+torn down again: server stopped, `chat-to-video` tunnel deleted, the
+`testings.thetrillioniar.me` DNS record removed, and all app-specific files deleted.
 
 ## Status
 - [x] Done
 
 ## Notes
-- Live: https://testings.thetrillioniar.me
-- Verify: `curl -fsS https://testings.thetrillioniar.me/api/health`
-- Smoke: register → chat → 10s 720x1280 H.264 MP4; log `.agent-logs/redeploy-smoke.log`
-- Remote runtime: Node 22.23.4 via nvm, apt FFmpeg 6.1.1, Piper at `~/tools/piper`
-- Tunnel: `chat-to-video` id `54ad66a4-3810-4938-8cea-7fee96803a1b`
-- Redeploy: `./scripts/deploy-tests2.sh`
+- No live URL. `https://testings.thetrillioniar.me` returns 404 and has no DNS record of its own.
+- tests2 cleaned: `/home/ubuntu/apps/chat-to-video`, app data, temp job workspaces, `~/tools/piper`, and the tunnel config/credentials were removed.
+- Left untouched on tests2: Fathom (`:3100`), AuraCounter (`:5000`), Mindcraft (`:8080`), and pre-existing tunnels (`triage-desk`, `hcm-lite`, …).
+- Local verification remains in `.agent-logs/`: `redeploy-smoke.log`, `redeploy-voice.log`, plus earlier `tsc`/`build` logs.
+- `docs/deploy.md` and `scripts/deploy-tests2.sh` are retained only as a reference runbook.

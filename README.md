@@ -2,9 +2,9 @@
 
 Describe a video in chat. Get a rendered vertical MP4 (or a designed still) back in the same conversation.
 
-Built as a hackathon preparation project and deployed for testing. It is **not** a generative video model: an LLM turns your chat into a storyboard, and a deterministic FFmpeg pipeline renders real scenes, captions, motion, and optional narration. Hard requests can be escalated to an autonomous `opencode` agent that works in a sandboxed job directory.
+Built as a hackathon preparation project. It is **not deployed** — there is no live URL. It is **not** a generative video model: an LLM turns your chat into a storyboard, and a deterministic FFmpeg pipeline renders real scenes, captions, motion, and optional narration. Hard requests can be escalated to an autonomous `opencode` agent that works in a sandboxed job directory.
 
-**Live demo:** https://testings.thetrillioniar.me  
+**Status:** preparation project, not deployed.  
 **Repo:** https://github.com/Abdulhadi446/chat-to-video
 
 ## What works
@@ -78,12 +78,12 @@ FFmpeg must be on `PATH` (or set `FFMPEG_PATH`). For narration:
 - `./scripts/setup-piper.sh` — local TTS binary + voice
 - `node scripts/render-demo.mjs` — render a sample without the app
 - `./scripts/smoke.sh` — end-to-end API smoke test against a running server
-- `./scripts/stage-standalone.sh` — stage a deploy-like app root for production testing
-- `./scripts/deploy-tests2.sh` — deploy the current standalone build to tests2
+- `./scripts/stage-standalone.sh` — stage a deploy-like app root for production testing (reference only)
+- `./scripts/deploy-tests2.sh` — reference deployment script; not currently used
 
 ## Deploy
 
-Deployed on tests2 behind a Cloudflare named tunnel at https://testings.thetrillioniar.me. Renders run at 720p on 2 vCPU. See `docs/deploy.md` for the runbook; `scripts/deploy-tests2.sh` redeploys the local standalone build.
+**Not deployed.** This was a preparation project; the tests2 deployment has been removed along with the `chat-to-video` tunnel and its DNS record. `docs/deploy.md` and `scripts/deploy-tests2.sh` remain only as a reference runbook for a VPS.
 
 ## Notes / limitations
 

@@ -1,8 +1,11 @@
-# Deploy (tests2 + Cloudflare named tunnel)
+# Deploy (tests2 + Cloudflare named tunnel) — REFERENCE ONLY
 
 Target: `tests2` (Ubuntu 24.04, 2 vCPU, 952 MB RAM + 10 GB swap). Renders at 720p; builds happen **locally** because the remote build is memory-constrained.
 
-Public URL: **https://testings.thetrillioniar.me** (stable named tunnel).
+> **This project is not deployed.** The tests2 app, tunnel, and `testings.thetrillioniar.me`
+> DNS record were deleted. Keep this document only as a runbook if you choose to deploy again.
+
+Public URL (only when deployed): **https://testings.thetrillioniar.me** (stable named tunnel).
 
 ## Remote layout (already provisioned)
 
@@ -88,4 +91,5 @@ ssh tests2 'tail -50 ~/apps/chat-to-video/app.log'
 - `cacheComponents: true` forbids `export const runtime` / `export const dynamic` in route segments. Don't add them.
 - Render jobs are serialized in-process; a restart drops queued jobs (retry from the UI).
 - The public hostname is stable: `testings.thetrillioniar.me` → named tunnel `chat-to-video`. It survives server/tunnel restarts; no URL rewrite needed.
+- This project is currently not deployed: that tunnel and the hostname record were deleted. Recreate both (steps 5–6) to bring it back.
 - The agent lane needs `opencode` configured with a model provider; without it jobs fall back to the deterministic renderer.

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Deploy the locally built standalone app to tests2 and (re)start the named tunnel.
-# Public URL: https://testings.thetrillioniar.me
+# REFERENCE ONLY — this project is not deployed; tests2 was cleaned up.
+# Public URL (when deployed): https://testings.thetrillioniar.me
 # Usage: ./scripts/deploy-tests2.sh          (reuses .next/standalone)
 #        SKIP_BUILD=0 ./scripts/deploy-tests2.sh  (rebuild first)
 set -euo pipefail
