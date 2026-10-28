@@ -1,20 +1,17 @@
-# Deploy (tests2 + Cloudflare named tunnel) — REFERENCE ONLY
+# Deploy (tests2 + Cloudflare named tunnel)
 
 Target: `tests2` (Ubuntu 24.04, 2 vCPU, 952 MB RAM + 10 GB swap). Renders at 720p; builds happen **locally** because the remote build is memory-constrained.
 
-> **This project is not deployed.** The tests2 app, tunnel, and `testings.thetrillioniar.me`
-> DNS record were deleted. Keep this document only as a runbook if you choose to deploy again.
-
-Public URL (only when deployed): **https://testings.thetrillioniar.me** (stable named tunnel).
+Public URL: **https://testings.thetrillioniar.me** (stable named tunnel).
 
 ## Remote layout (already provisioned)
 
 | Thing | Path |
 | --- | --- |
-| ffmpeg / ffprobe | `/home/ubuntu/bin/ffmpeg`, `/home/ubuntu/bin/ffprobe` |
-| Node 26 | `/home/ubuntu/tools/node/bin/node` (symlinked into `~/bin`) |
+| ffmpeg / ffprobe | `/usr/bin/ffmpeg`, `/usr/bin/ffprobe` (apt) |
+| Node 22 | `/home/ubuntu/.nvm/versions/node/v22.23.4/bin/node` |
 | Piper + voice | `/home/ubuntu/tools/piper/piper`, `voices/en_US-lessac-medium.onnx` |
-| opencode | `/home/ubuntu/.opencode/bin/opencode` (v2.1.1) |
+| opencode | `/home/ubuntu/.opencode/bin/opencode` (v2.1.4) |
 | App | `/home/ubuntu/apps/chat-to-video` |
 | Data | `data/{uploads,outputs,jobs}` (persist across deploys) |
 | Port | `3000` (3100 is occupied) |
@@ -22,7 +19,7 @@ Public URL (only when deployed): **https://testings.thetrillioniar.me** (stable 
 Every remote command needs:
 
 ```bash
-export PATH=$HOME/bin:$HOME/tools/node/bin:$PATH
+export PATH=$HOME/.nvm/versions/node/v22.23.4/bin:$HOME/tools/piper:$PATH
 ```
 
 ## Deploy
@@ -42,9 +39,9 @@ rsync -az video-generation.md tests2:~/apps/chat-to-video/
 scp .env tests2:~/apps/chat-to-video/.env
 
 # 4. Restart
-ssh tests2 'cd ~/apps/chat-to-video && export PATH=$HOME/bin:$HOME/tools/node/bin:$PATH && \
-  pkill -f "node server.js" 2>/dev/null || true; \
-  PORT=3000 HOSTNAME=127.0.0.1 nohup node server.js > app.log 2>&1 &'
+ssh tests2 'cd ~/apps/chat-to-video && export PATH=$HOME/.nvm/versions/node/v22.23.4/bin:$HOME/tools/piper:$PATH && \
+  fuser -k 3000/tcp 2>/dev/null || true; \
+  setsid env PORT=3000 HOSTNAME=127.0.0.1 node server.js > app.log 2>&1 < /dev/null &'
 
 # 5. Named tunnel (stable hostname; already provisioned)
 ssh tests2 'cd ~/apps/chat-to-video && \
@@ -68,8 +65,8 @@ Production `.env` additions:
 
 ```dotenv
 NODE_ENV=production
-FFMPEG_PATH=/home/ubuntu/bin/ffmpeg
-FFPROBE_PATH=/home/ubuntu/bin/ffprobe
+FFMPEG_PATH=/usr/bin/ffmpeg
+FFPROBE_PATH=/usr/bin/ffprobe
 PIPER_PATH=/home/ubuntu/tools/piper/piper
 PIPER_MODEL=/home/ubuntu/tools/piper/voices/en_US-lessac-medium.onnx
 OPENCODE_BIN=/home/ubuntu/.opencode/bin/opencode
@@ -91,5 +88,4 @@ ssh tests2 'tail -50 ~/apps/chat-to-video/app.log'
 - `cacheComponents: true` forbids `export const runtime` / `export const dynamic` in route segments. Don't add them.
 - Render jobs are serialized in-process; a restart drops queued jobs (retry from the UI).
 - The public hostname is stable: `testings.thetrillioniar.me` → named tunnel `chat-to-video`. It survives server/tunnel restarts; no URL rewrite needed.
-- The old quick-tunnel process (`--config /dev/null`) may still exist as a fallback; it does not affect the named hostname.
-- The agent lane needs `opencode` configured with an OpenRouter provider; without it jobs fall back to the deterministic renderer.
+- The agent lane needs `opencode` configured with a model provider; without it jobs fall back to the deterministic renderer.

@@ -1,17 +1,20 @@
 # Current Task
 
 ## Task
-Project cleanup — undeployed and tests2 cleaned
+M8 — Deployed to tests2 for testing
 
 ## Description
-This is a hackathon preparation project, not a deployed app. The tests2 server was
-torn down and all deployment artifacts created for this project were removed.
+Redeployed the standalone build to tests2 and recreated the stable Cloudflare tunnel
+for `testings.thetrillioniar.me`. The previous hostname target was replaced; unrelated
+tests2 apps (Fathom, AuraCounter, Mindcraft) were left running.
 
 ## Status
 - [x] Done
 
 ## Notes
-- No live URL. The `testings.thetrillioniar.me` CNAME and the `chat-to-video` Cloudflare tunnel were deleted.
-- tests2 cleaned: app dir, data, temp job workspaces, app-specific Node/FFmpeg/Piper binaries, and the temporary tunnel config were removed; the pre-existing triage-desk tunnel was left untouched.
-- Local verification remains in `.agent-logs/`: `tsc`, `build-hard-final.log`, `hard-e2e-pwd.log`, `live-hard-decision.log`.
-- `docs/deploy.md` and `scripts/deploy-tests2.sh` are retained only as reference.
+- Live: https://testings.thetrillioniar.me
+- Verify: `curl -fsS https://testings.thetrillioniar.me/api/health`
+- Smoke: register → chat → 10s 720x1280 H.264 MP4; log `.agent-logs/redeploy-smoke.log`
+- Remote runtime: Node 22.23.4 via nvm, apt FFmpeg 6.1.1, Piper at `~/tools/piper`
+- Tunnel: `chat-to-video` id `54ad66a4-3810-4938-8cea-7fee96803a1b`
+- Redeploy: `./scripts/deploy-tests2.sh`

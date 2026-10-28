@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Deploy the locally built standalone app to tests2 and (re)start the named tunnel.
-# REFERENCE ONLY — this project is not deployed; tests2 was cleaned up.
-# Public URL (when deployed): https://testings.thetrillioniar.me
+# Public URL: https://testings.thetrillioniar.me
 # Usage: ./scripts/deploy-tests2.sh          (reuses .next/standalone)
 #        SKIP_BUILD=0 ./scripts/deploy-tests2.sh  (rebuild first)
 set -euo pipefail
@@ -28,8 +27,8 @@ fi
 cp .env "$TMP_ENV"
 for line in \
   "NODE_ENV=production" \
-  "FFMPEG_PATH=/home/ubuntu/bin/ffmpeg" \
-  "FFPROBE_PATH=/home/ubuntu/bin/ffprobe" \
+  "FFMPEG_PATH=/usr/bin/ffmpeg" \
+  "FFPROBE_PATH=/usr/bin/ffprobe" \
   "PIPER_PATH=/home/ubuntu/tools/piper/piper" \
   "PIPER_MODEL=/home/ubuntu/tools/piper/voices/en_US-lessac-medium.onnx" \
   "OPENCODE_BIN=/home/ubuntu/.opencode/bin/opencode" \
@@ -50,7 +49,7 @@ rsync -az video-generation.md "tests2:$APP/video-generation.md"
 scp -q "$TMP_ENV" "tests2:$APP/.env"
 
 echo "== restart server"
-ssh tests2 "cd $APP && export PATH=\$HOME/bin:\$HOME/tools/node/bin:\$HOME/.opencode/bin:\$PATH && \
+ssh tests2 "cd $APP && export PATH=\$HOME/.nvm/versions/node/v22.23.4/bin:\$HOME/tools/piper:\$HOME/.opencode/bin:\$PATH && \
   fuser -k 3000/tcp 2>/dev/null || true; sleep 1; \
   setsid env PORT=3000 HOSTNAME=127.0.0.1 node server.js > app.log 2>&1 < /dev/null &"
 sleep 3
